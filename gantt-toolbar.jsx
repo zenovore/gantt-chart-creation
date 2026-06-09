@@ -58,7 +58,7 @@ function StreamFilter({ streams, streamColors, selected, onChange }) {
       onChange(next.size === streams.length ? null : next);
     }
   };
-  const selectAll = () => onChange(null);
+  const selectAll = () => onChange(allSelected ? new Set() : null);
   return (
     <Dropdown label="Streams" count={activeCount}>
       <div className="dropdown-item" onClick={selectAll}>
