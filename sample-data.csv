@@ -1,0 +1,37 @@
+task_id,subtask_id,task,subtask,stream,description,start_date,end_date,progress,dependencies
+OIT-01,,Network Infrastructure Upgrade,,Infrastructure,Complete overhaul of core network infrastructure including switches routers and firewalls,05-Jan-2026,28-Feb-2026,100,
+OIT-01,OIT-01-001,Network Infrastructure Upgrade,Switch Replacement,Infrastructure,Replace all core and access layer switches with next-gen models,05-Jan-2026,30-Jan-2026,100,
+OIT-01,OIT-01-002,Network Infrastructure Upgrade,Firewall Configuration,Infrastructure,Configure and deploy new firewall rules and security policies,01-Feb-2026,20-Feb-2026,100,OIT-01-001
+OIT-01,OIT-01-003,Network Infrastructure Upgrade,Network Testing,Infrastructure,End-to-end network performance and security testing,21-Feb-2026,28-Feb-2026,100,OIT-01-002
+OIT-02,,Cloud Platform Migration,,Infrastructure,Migrate on-premises workloads to cloud infrastructure,01-Mar-2026,31-Jul-2026,42,OIT-01
+OIT-02,OIT-02-001,Cloud Platform Migration,Environment Setup,Infrastructure,Provision cloud environments and configure networking,01-Mar-2026,31-Mar-2026,100,OIT-01
+OIT-02,OIT-02-002,Cloud Platform Migration,Database Migration,Infrastructure,Migrate production databases to cloud-hosted instances,01-Apr-2026,31-May-2026,75,OIT-02-001
+OIT-02,OIT-02-003,Cloud Platform Migration,Application Rehosting,Infrastructure,Migrate and optimize application workloads,01-Jun-2026,31-Jul-2026,15,OIT-02-002
+OIT-03,,ERP System Implementation,,Application Dev,Deploy new enterprise resource planning system across all departments,15-Jan-2026,30-Sep-2026,35,
+OIT-03,OIT-03-001,ERP System Implementation,Requirements Gathering,Application Dev,Collect and document business requirements from all stakeholders,15-Jan-2026,28-Feb-2026,100,
+OIT-03,OIT-03-002,ERP System Implementation,System Configuration,Application Dev,Configure ERP modules to match business processes,01-Mar-2026,31-May-2026,80,OIT-03-001
+OIT-03,OIT-03-003,ERP System Implementation,Data Migration,Application Dev,Migrate legacy data to new ERP system,01-Jun-2026,31-Jul-2026,10,OIT-03-002
+OIT-03,OIT-03-004,ERP System Implementation,User Acceptance Testing,Application Dev,Conduct UAT with key business users,01-Aug-2026,15-Sep-2026,0,OIT-03-003
+OIT-03,OIT-03-005,ERP System Implementation,Go-Live Support,Application Dev,Production deployment and hypercare support,16-Sep-2026,30-Sep-2026,0,OIT-03-004
+OIT-04,,Data Analytics Platform,,Data & Analytics,Build centralized data warehouse and analytics dashboards,01-Mar-2026,30-Jun-2026,55,
+OIT-04,OIT-04-001,Data Analytics Platform,Data Warehouse Design,Data & Analytics,Design data warehouse schema and ETL pipelines,01-Mar-2026,15-Apr-2026,100,
+OIT-04,OIT-04-002,Data Analytics Platform,ETL Development,Data & Analytics,Build and test ETL jobs for all data sources,16-Apr-2026,31-May-2026,70,OIT-04-001
+OIT-04,OIT-04-003,Data Analytics Platform,Dashboard Development,Data & Analytics,Create executive and operational dashboards,01-Jun-2026,30-Jun-2026,20,OIT-04-002
+OIT-05,,Security Compliance Program,,Security,Achieve SOC 2 Type II and ISO 27001 compliance,01-Apr-2026,30-Aug-2026,30,
+OIT-05,OIT-05-001,Security Compliance Program,Gap Assessment,Security,Identify gaps against SOC 2 and ISO 27001 requirements,01-Apr-2026,30-Apr-2026,100,
+OIT-05,OIT-05-002,Security Compliance Program,Policy Development,Security,Create and update security policies and procedures,01-May-2026,15-Jun-2026,55,OIT-05-001
+OIT-05,OIT-05-003,Security Compliance Program,Technical Controls,Security,Implement required technical security controls,16-May-2026,31-Jul-2026,15,OIT-05-001
+OIT-05,OIT-05-004,Security Compliance Program,Audit Preparation,Security,Prepare documentation and evidence for external audit,01-Aug-2026,30-Aug-2026,0,"OIT-05-002,OIT-05-003"
+OIT-06,,Change Management Program,,Change Mgmt,Organization-wide change management for IT transformation,15-Jan-2026,30-Sep-2026,40,
+OIT-06,OIT-06-001,Change Management Program,Stakeholder Analysis,Change Mgmt,Map stakeholders and create communication plans,15-Jan-2026,28-Feb-2026,100,
+OIT-06,OIT-06-002,Change Management Program,Communications Campaign,Change Mgmt,Execute multi-channel change communications,01-Mar-2026,30-Sep-2026,35,OIT-06-001
+OIT-06,OIT-06-003,Change Management Program,Impact Assessment,Change Mgmt,Assess organizational readiness and change impacts,01-Apr-2026,31-May-2026,85,OIT-06-001
+OIT-07,,Staff Training Program,,Training,Comprehensive training program for all new systems and tools,01-May-2026,31-Oct-2026,15,
+OIT-07,OIT-07-001,Staff Training Program,Training Needs Analysis,Training,Identify training requirements by role and department,01-May-2026,31-May-2026,80,
+OIT-07,OIT-07-002,Staff Training Program,Content Development,Training,Develop training materials and e-learning modules,01-Jun-2026,31-Jul-2026,10,OIT-07-001
+OIT-07,OIT-07-003,Staff Training Program,Pilot Training,Training,Conduct pilot training sessions with key user groups,01-Aug-2026,31-Aug-2026,0,OIT-07-002
+OIT-07,OIT-07-004,Staff Training Program,Organization Rollout,Training,Full training rollout across all departments,01-Sep-2026,31-Oct-2026,0,OIT-07-003
+OIT-08,,API Integration Platform,,Application Dev,Build centralized API gateway and integration layer,01-Mar-2026,31-Jul-2026,38,OIT-01
+OIT-08,OIT-08-001,API Integration Platform,API Gateway Setup,Application Dev,Deploy and configure API management platform,01-Mar-2026,15-Apr-2026,100,OIT-01
+OIT-08,OIT-08-002,API Integration Platform,Core API Development,Application Dev,Develop core REST APIs for key business services,16-Apr-2026,30-Jun-2026,45,OIT-08-001
+OIT-08,OIT-08-003,API Integration Platform,Third-Party Integrations,Application Dev,Build integrations with external vendor systems,01-Jun-2026,31-Jul-2026,5,OIT-08-002
