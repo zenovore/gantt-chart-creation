@@ -115,6 +115,20 @@ function App() {
     });
   }, []);
 
+  const expandAll = useCallback(() => {
+    if (processedData) setExpanded(new Set(processedData.tasks.map(t => t.id)));
+  }, [processedData]);
+
+  const collapseAll = useCallback(() => setExpanded(new Set()), []);
+
+  const handleFitToScreen = useCallback(() => {
+    if (processedData && processedData.timelineStart && processedData.timelineEnd) {
+      const totalDays = diffDays(processedData.timelineStart, processedData.timelineEnd);
+      const availWidth = window.innerWidth - LEFT_W - 60;
+      setDayWidth(Math.max(2, Math.min(20, Math.floor(availWidth / totalDays))));
+    }
+  }, [processedData]);
+
   // CSV upload handler
   const handleUpload = useCallback((file) => {
     setError(null);
@@ -198,6 +212,7 @@ function App() {
         theme={theme} onThemeChange={setTheme}
         onUpload={handleUpload} onLoadSample={handleLoadSample}
         onExportSVG={handleExportSVG}
+        onFitToScreen={handleFitToScreen}
         taskCount={taskCount} subtaskCount={subtaskCount}
       />
       {processedData && <Legend streams={processedData.streams} streamColors={processedData.streamColors} />}
@@ -230,6 +245,8 @@ function App() {
           flatRows={flatRows}
           expanded={expanded}
           toggleExpand={toggleExpand}
+          onExpandAll={expandAll}
+          onCollapseAll={collapseAll}
           dayWidth={dayWidth}
           showDeps={showDeps}
         />

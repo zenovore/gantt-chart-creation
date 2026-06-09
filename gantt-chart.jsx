@@ -203,7 +203,7 @@ function TooltipCard({ item, position }) {
 }
 
 // --- Main Gantt Chart ---
-function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps }) {
+function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps, onExpandAll, onCollapseAll }) {
   const scrollRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({x: 0, y: 0});
@@ -220,6 +220,11 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
   }, [flatRows]);
 
   const totalHeight = flatRows.length * ROW_HEIGHT;
+
+  const allExpanded = useMemo(() => {
+    const expandable = flatRows.filter(r => r.type === 'task' && r.hasChildren);
+    return expandable.length > 0 && expandable.every(r => expanded.has(r.id));
+  }, [flatRows, expanded]);
 
   const handleBarHover = useCallback((row, e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -242,6 +247,11 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
         {/* Header row */}
         <div className="gantt-header-row">
           <div className="gantt-corner">
+            {onExpandAll && (
+              <button className="expand-btn" onClick={allExpanded ? onCollapseAll : onExpandAll} title={allExpanded ? 'Collapse all' : 'Expand all'}>
+                {allExpanded ? '▾' : '▸'}
+              </button>
+            )}
             <span style={{flex:1}}>Task</span>
             <span style={{width:60, textAlign:'right'}}>Stream</span>
           </div>
@@ -252,25 +262,32 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
 
         {/* Body */}
         <div className="gantt-body" style={{position:'relative'}}>
-          {flatRows.map((row, i) => (
-            <div key={row.id + '-' + i} className={`gantt-row ${i % 2 === 0 ? 'even' : ''}`}>
-              <div className="gantt-left-cell">
-                <LeftPanelRow row={row} isExpanded={expanded.has(row.id)} onToggle={toggleExpand} streamColors={data.streamColors} />
-              </div>
-              <div className="gantt-chart-cell" style={{width: chartWidth, minWidth: chartWidth, position:'relative', height: ROW_HEIGHT}}>
-                {row.type !== 'stream-header' && (
-                  <TaskBar row={row} data={data} dayWidth={dayWidth} onHover={handleBarHover} onLeave={handleBarLeave} />
-                )}
-              </div>
+          {flatRows.length === 0 ? (
+            <div style={{display:'flex', alignItems:'center', justifyContent:'center', padding:'60px 0', color:'var(--text-tertiary)', fontSize:13}}>
+              No tasks match current filters
             </div>
-          ))}
+          ) : (
+            <React.Fragment>
+              {flatRows.map((row, i) => (
+                <div key={row.id + '-' + i} className={`gantt-row ${i % 2 === 0 ? 'even' : ''}`}>
+                  <div className="gantt-left-cell">
+                    <LeftPanelRow row={row} isExpanded={expanded.has(row.id)} onToggle={toggleExpand} streamColors={data.streamColors} />
+                  </div>
+                  <div className="gantt-chart-cell" style={{width: chartWidth, minWidth: chartWidth, position:'relative', height: ROW_HEIGHT}}>
+                    {row.type !== 'stream-header' && (
+                      <TaskBar row={row} data={data} dayWidth={dayWidth} onHover={handleBarHover} onLeave={handleBarLeave} />
+                    )}
+                  </div>
+                </div>
+              ))}
 
-          {/* Overlays on chart area */}
-          <div style={{position:'absolute', top:0, left: LEFT_W, width: chartWidth, height: totalHeight, pointerEvents:'none'}}>
-            <GridLines data={data} dayWidth={dayWidth} chartWidth={chartWidth} totalHeight={totalHeight} />
-            <TodayLine data={data} dayWidth={dayWidth} totalHeight={totalHeight} />
-            {showDeps && <DependencyArrows flatRows={flatRows} data={data} dayWidth={dayWidth} rowIndexMap={rowIndexMap} />}
-          </div>
+              <div style={{position:'absolute', top:0, left: LEFT_W, width: chartWidth, height: totalHeight, pointerEvents:'none'}}>
+                <GridLines data={data} dayWidth={dayWidth} chartWidth={chartWidth} totalHeight={totalHeight} />
+                <TodayLine data={data} dayWidth={dayWidth} totalHeight={totalHeight} />
+                {showDeps && <DependencyArrows flatRows={flatRows} data={data} dayWidth={dayWidth} rowIndexMap={rowIndexMap} />}
+              </div>
+            </React.Fragment>
+          )}
         </div>
       </div>
 

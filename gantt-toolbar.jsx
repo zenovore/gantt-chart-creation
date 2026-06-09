@@ -31,7 +31,7 @@ function Dropdown({ label, children, count }) {
     <div className="dropdown">
       <button className="btn btn-sm" ref={btnRef} onClick={() => setOpen(!open)}>
         {label}{count != null && count > 0 ? ` (${count})` : ''}
-        <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft: 2}}>
+        <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft: 2, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s'}}>
           <path d="M2 4 L5 7 L8 4" stroke="currentColor" fill="none" strokeWidth="1.5"/>
         </svg>
       </button>
@@ -48,27 +48,27 @@ function Dropdown({ label, children, count }) {
 // --- Stream Filter ---
 function StreamFilter({ streams, streamColors, selected, onChange }) {
   const allSelected = selected === null;
-  const activeCount = allSelected ? 0 : selected.size;
+  const activeCount = allSelected ? 0 : streams.length - selected.size;
   const toggle = (s) => {
     if (allSelected) {
       const next = new Set(streams); next.delete(s); onChange(next);
     } else {
       const next = new Set(selected);
       if (next.has(s)) next.delete(s); else next.add(s);
-      onChange(next.size === streams.length ? null : next.size === 0 ? null : next);
+      onChange(next.size === streams.length ? null : next);
     }
   };
   const selectAll = () => onChange(null);
   return (
     <Dropdown label="Streams" count={activeCount}>
       <div className="dropdown-item" onClick={selectAll}>
-        <input type="checkbox" checked={allSelected} readOnly style={{accentColor: 'var(--accent)'}} />
+        <input type="checkbox" checked={allSelected} readOnly style={{accentColor: 'var(--accent)', pointerEvents: 'none'}} />
         <span style={{fontWeight: 600}}>All Streams</span>
       </div>
       <div style={{height: 1, background: 'var(--border)', margin: '4px 0'}}></div>
       {streams.map(s => (
         <div key={s} className="dropdown-item" onClick={() => toggle(s)}>
-          <input type="checkbox" checked={allSelected || selected.has(s)} readOnly style={{accentColor: streamColors[s]}} />
+          <input type="checkbox" checked={allSelected || selected.has(s)} readOnly style={{accentColor: streamColors[s], pointerEvents: 'none'}} />
           <span className="stream-pill" style={{background: streamColors[s], fontSize: 10, padding: '1px 6px'}}>{s}</span>
         </div>
       ))}
@@ -85,7 +85,7 @@ function RAGFilter({ selected, onChange }) {
     } else {
       const next = new Set(selected);
       if (next.has(rag)) next.delete(rag); else next.add(rag);
-      onChange(next.size === 3 ? null : next.size === 0 ? null : next);
+      onChange(next.size === 3 ? null : next);
     }
   };
   return (
@@ -138,11 +138,14 @@ function GroupByControl({ value, onChange }) {
 }
 
 // --- Zoom Control ---
-function ZoomControl({ dayWidth, onChange }) {
+function ZoomControl({ dayWidth, onChange, onFit }) {
   return (
     <div style={{display:'flex', alignItems:'center', gap: 2}}>
       <button className="btn btn-sm" onClick={() => onChange(Math.max(1.5, dayWidth / 1.4))} title="Zoom out">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button className="btn btn-sm" onClick={onFit} title="Fit to screen">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
       </button>
       <button className="btn btn-sm" onClick={() => onChange(Math.min(30, dayWidth * 1.4))} title="Zoom in">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -198,6 +201,7 @@ function Toolbar({
   dayWidth, onDayWidthChange,
   theme, onThemeChange,
   onUpload, onLoadSample, onExportSVG,
+  onFitToScreen,
   taskCount, subtaskCount,
 }) {
   const fileRef = useRef(null);
@@ -235,7 +239,7 @@ function Toolbar({
           <Toggle label="Hide done" checked={hideCompleted} onChange={onHideCompletedChange} />
           <Toggle label="Arrows" checked={showDeps} onChange={onShowDepsChange} />
           <div style={{width: 1, height: 24, background: 'var(--border)'}}></div>
-          <ZoomControl dayWidth={dayWidth} onChange={onDayWidthChange} />
+          <ZoomControl dayWidth={dayWidth} onChange={onDayWidthChange} onFit={onFitToScreen} />
           <div style={{flex:1}}></div>
           <button className="btn btn-sm" onClick={onExportSVG}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
