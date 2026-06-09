@@ -333,6 +333,107 @@ body {
 .gantt-container::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
 .gantt-container::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 .gantt-container::-webkit-scrollbar-corner { background: var(--bg-secondary); }
+
+/* === Tracker Panel === */
+.tracker-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.15);
+  display: flex; justify-content: flex-end;
+}
+[data-theme="dark"] .tracker-overlay { background: rgba(0,0,0,0.4); }
+.tracker-panel {
+  width: 420px; max-width: 90vw; height: 100vh;
+  background: var(--bg-primary); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+}
+.tracker-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tracker-title { font-weight: 700; font-size: 14px; }
+.tracker-date { font-size: 11px; color: var(--text-tertiary); }
+.tracker-body { flex: 1; overflow-y: auto; padding: 12px; }
+.tracker-section { margin-bottom: 16px; }
+.tracker-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-secondary);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.tracker-section-title.blocker { color: #DC2626; }
+[data-theme="dark"] .tracker-section-title.blocker { color: #FCA5A5; }
+.tracker-task-card {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px; margin-bottom: 6px;
+}
+.tracker-task-top {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+}
+.tracker-task-id {
+  font-size: 10px; color: var(--text-tertiary);
+  font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
+  flex-shrink: 0;
+}
+.tracker-task-name {
+  font-size: 12px; font-weight: 600; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tracker-task-progress {
+  font-size: 12px; font-weight: 700; color: var(--text-secondary); flex-shrink: 0;
+}
+.tracker-progress-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.tracker-progress-bar {
+  flex: 1; height: 5px; background: var(--bg-tertiary);
+  border-radius: 3px; overflow: hidden;
+}
+.tracker-progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.delta-badge {
+  font-size: 10px; font-weight: 700; padding: 1px 5px;
+  border-radius: 3px; flex-shrink: 0;
+}
+.delta-badge.positive { background: #DCFCE7; color: #166534; }
+.delta-badge.negative { background: #FEE2E2; color: #991B1B; }
+.delta-badge.neutral { background: var(--bg-tertiary); color: var(--text-tertiary); }
+[data-theme="dark"] .delta-badge.positive { background: #14532D; color: #86EFAC; }
+[data-theme="dark"] .delta-badge.negative { background: #7F1D1D; color: #FCA5A5; }
+.delta-week { font-size: 9px; color: var(--text-tertiary); flex-shrink: 0; }
+.tracker-blocker-card {
+  background: #FEF2F2; border: 1px solid #FECACA;
+  border-radius: var(--radius); padding: 8px 10px; margin-bottom: 4px;
+}
+[data-theme="dark"] .tracker-blocker-card { background: #1C1012; border-color: #7F1D1D; }
+.tracker-blocker-text { color: #991B1B; margin-top: 4px; font-size: 11px; }
+[data-theme="dark"] .tracker-blocker-text { color: #FCA5A5; }
+.tracker-note-display {
+  cursor: pointer; padding: 4px 6px; min-height: 24px;
+  border-radius: var(--radius-sm); transition: background 0.1s;
+}
+.tracker-note-display:hover { background: var(--bg-hover); }
+.tracker-note-item { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+.tracker-note-item.blocker { color: #DC2626; }
+[data-theme="dark"] .tracker-note-item.blocker { color: #FCA5A5; }
+.tracker-note-placeholder { font-size: 11px; color: var(--text-tertiary); font-style: italic; }
+.tracker-edit { margin-top: 6px; }
+.tracker-field { margin-bottom: 6px; }
+.tracker-field label {
+  display: block; font-size: 10px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 3px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.tracker-field textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-primary); color: var(--text-primary);
+  font-size: 12px; padding: 6px 8px; font-family: inherit;
+  resize: vertical; outline: none;
+}
+.tracker-field textarea:focus { border-color: var(--accent); }
+.tracker-edit-actions { display: flex; gap: 6px; margin-top: 6px; }
+.tracker-footer {
+  padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -340,6 +441,7 @@ body {
 <script src="gantt-utils.js"></script>
 <script type="text/babel" src="gantt-toolbar.jsx"></script>
 <script type="text/babel" src="gantt-chart.jsx"></script>
+<script type="text/babel" src="gantt-tracker.jsx"></script>
 <script type="text/babel" src="gantt-app.jsx"></script>
 </body>
 </html>

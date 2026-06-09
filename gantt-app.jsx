@@ -71,6 +71,15 @@ function App() {
   const [groupBy, setGroupBy] = useState('hierarchy');
   const [expanded, setExpanded] = useState(new Set());
   const [dayWidth, setDayWidth] = useState(5);
+  const [trackerOpen, setTrackerOpen] = useState(false);
+  const [snapshots, setSnapshots] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gantt-snapshots') || '{}'); }
+    catch (e) { return {}; }
+  });
+  const [notes, setNotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gantt-notes') || '{}'); }
+    catch (e) { return {}; }
+  });
 
   // Theme persistence
   useEffect(() => {
@@ -98,6 +107,33 @@ function App() {
       }
     }
   }, [processedData]);
+
+  // Auto-snapshot progress on data load
+  useEffect(() => {
+    if (processedData) {
+      const dateKey = formatDateKey(new Date());
+      const snap = {};
+      processedData.tasks.forEach(t => {
+        snap[t.id] = t.progress;
+        t.subtasks.forEach(s => { snap[s.id] = s.progress; });
+      });
+      setSnapshots(prev => {
+        const next = { ...prev, [dateKey]: snap };
+        localStorage.setItem('gantt-snapshots', JSON.stringify(next));
+        return next;
+      });
+    }
+  }, [processedData]);
+
+  const saveNote = useCallback((taskId, noteData) => {
+    const dateKey = formatDateKey(new Date());
+    const key = `${dateKey}|${taskId}`;
+    setNotes(prev => {
+      const next = { ...prev, [key]: { ...noteData, timestamp: Date.now() } };
+      localStorage.setItem('gantt-notes', JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   // Filter and flatten
   const filteredTasks = useMemo(() => {
@@ -213,9 +249,21 @@ function App() {
         onUpload={handleUpload} onLoadSample={handleLoadSample}
         onExportSVG={handleExportSVG}
         onFitToScreen={handleFitToScreen}
+        onToggleTracker={() => setTrackerOpen(!trackerOpen)}
+        trackerOpen={trackerOpen}
         taskCount={taskCount} subtaskCount={subtaskCount}
       />
       {processedData && <Legend streams={processedData.streams} streamColors={processedData.streamColors} />}
+      {processedData && (
+        <TrackerPanel
+          data={processedData}
+          isOpen={trackerOpen}
+          onClose={() => setTrackerOpen(false)}
+          snapshots={snapshots}
+          notes={notes}
+          onSaveNote={saveNote}
+        />
+      )}
       {error && (
         <div className="error-banner">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
