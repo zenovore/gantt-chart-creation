@@ -4,21 +4,43 @@ const { useState, useRef, useEffect, useCallback } = React;
 // --- Dropdown wrapper ---
 function Dropdown({ label, children, count }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const btnRef = useRef(null);
+  const menuRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (btnRef.current && btnRef.current.contains(e.target)) return;
+      if (menuRef.current && menuRef.current.contains(e.target)) return;
+      setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      let left = rect.left;
+      if (left + 200 > window.innerWidth) left = window.innerWidth - 210;
+      setPos({ top: rect.bottom, left });
+    }
+  }, [open]);
+
   return (
-    <div className="dropdown" ref={ref}>
-      <button className="btn btn-sm" onClick={() => setOpen(!open)}>
+    <div className="dropdown">
+      <button className="btn btn-sm" ref={btnRef} onClick={() => setOpen(!open)}>
         {label}{count != null && count > 0 ? ` (${count})` : ''}
         <svg width="10" height="10" viewBox="0 0 10 10" style={{marginLeft: 2}}>
           <path d="M2 4 L5 7 L8 4" stroke="currentColor" fill="none" strokeWidth="1.5"/>
         </svg>
       </button>
-      {open && <div className="dropdown-menu">{children}</div>}
+      {open && ReactDOM.createPortal(
+        <div className="dropdown-menu" ref={menuRef} style={{position: 'fixed', top: pos.top, left: pos.left}}>
+          {children}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
