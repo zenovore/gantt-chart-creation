@@ -291,9 +291,14 @@ OIT-08,OIT-08-001,API Integration Platform,API Gateway Setup,Application Dev,Dep
 OIT-08,OIT-08-002,API Integration Platform,Core API Development,Application Dev,Develop core REST APIs for key business services,16-Apr-2026,30-Jun-2026,45,OIT-08-001
 OIT-08,OIT-08-003,API Integration Platform,Third-Party Integrations,Application Dev,Build integrations with external vendor systems,01-Jun-2026,31-Jul-2026,5,OIT-08-002`;
 
+function formatDateKey(d) {
+  if (!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 // Expose everything globally
 Object.assign(window, {
-  parseDate, formatDate, diffDays, addDays, startOfWeek, startOfMonth,
+  parseDate, formatDate, formatDateKey, diffDays, addDays, startOfWeek, startOfMonth,
   calculateRAG, RAG_COLORS, RAG_BG, RAG_LABELS, STREAM_COLORS, MONTH_NAMES, MONTH_FULL,
   validateCSVColumns, processCSVData,
   getMonthHeaders, getWeekHeaders,

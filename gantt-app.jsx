@@ -71,6 +71,8 @@ function App() {
   const [groupBy, setGroupBy] = useState('hierarchy');
   const [expanded, setExpanded] = useState(new Set());
   const [dayWidth, setDayWidth] = useState(5);
+  const [compareData, setCompareData] = useState(null);
+  const [compareFileName, setCompareFileName] = useState(null);
 
   // Theme persistence
   useEffect(() => {
@@ -98,6 +100,24 @@ function App() {
       }
     }
   }, [processedData]);
+
+  // Compute deltas when comparing two CSVs
+  const deltas = useMemo(() => {
+    if (!processedData || !compareData) return null;
+    const map = {};
+    const compareMap = {};
+    compareData.tasks.forEach(t => {
+      compareMap[t.id] = t.progress;
+      t.subtasks.forEach(s => { compareMap[s.id] = s.progress; });
+    });
+    processedData.tasks.forEach(t => {
+      if (compareMap[t.id] != null) map[t.id] = t.progress - compareMap[t.id];
+      t.subtasks.forEach(s => {
+        if (compareMap[s.id] != null) map[s.id] = s.progress - compareMap[s.id];
+      });
+    });
+    return map;
+  }, [processedData, compareData]);
 
   // Filter and flatten
   const filteredTasks = useMemo(() => {
@@ -165,6 +185,35 @@ function App() {
     });
   }, []);
 
+  // Compare CSV upload
+  const handleCompareUpload = useCallback((file) => {
+    setError(null);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (!results.data || results.data.length === 0) {
+          setError('Compare CSV is empty or could not be parsed.');
+          return;
+        }
+        const headers = Object.keys(results.data[0]);
+        const validation = validateCSVColumns(headers);
+        if (!validation.valid) {
+          setError(`Compare CSV missing columns: ${validation.missing.join(', ')}`);
+          return;
+        }
+        setCompareData(processCSVData(results.data));
+        setCompareFileName(file.name);
+      },
+      error: (err) => setError(`Compare parse error: ${err.message}`),
+    });
+  }, []);
+
+  const handleClearCompare = useCallback(() => {
+    setCompareData(null);
+    setCompareFileName(null);
+  }, []);
+
   // Load sample
   const handleLoadSample = useCallback(() => {
     setError(null);
@@ -213,6 +262,9 @@ function App() {
         onUpload={handleUpload} onLoadSample={handleLoadSample}
         onExportSVG={handleExportSVG}
         onFitToScreen={handleFitToScreen}
+        onCompareUpload={handleCompareUpload}
+        onClearCompare={handleClearCompare}
+        compareFileName={compareFileName}
         taskCount={taskCount} subtaskCount={subtaskCount}
       />
       {processedData && <Legend streams={processedData.streams} streamColors={processedData.streamColors} />}
@@ -249,6 +301,7 @@ function App() {
           onCollapseAll={collapseAll}
           dayWidth={dayWidth}
           showDeps={showDeps}
+          deltas={deltas}
         />
       )}
     </div>

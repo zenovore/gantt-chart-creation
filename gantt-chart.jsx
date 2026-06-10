@@ -75,7 +75,7 @@ function GridLines({ data, dayWidth, chartWidth, totalHeight }) {
 }
 
 // --- Task Bar ---
-function TaskBar({ row, data, dayWidth, onHover, onLeave }) {
+function TaskBar({ row, data, dayWidth, onHover, onLeave, delta }) {
   if (!row.startDate || !row.endDate) return null;
   const left = diffDays(data.timelineStart, row.startDate) * dayWidth;
   const width = Math.max(3, diffDays(row.startDate, row.endDate) * dayWidth);
@@ -93,6 +93,11 @@ function TaskBar({ row, data, dayWidth, onHover, onLeave }) {
       <div className="bar-fill" style={{width: fillW, background: color}}></div>
       {width > 32 && (
         <span className="bar-label">{row.progress}%</span>
+      )}
+      {delta != null && delta !== 0 && width > 50 && (
+        <span className={`bar-delta ${delta > 0 ? 'positive' : 'negative'}`}>
+          {delta > 0 ? '+' : ''}{delta}%
+        </span>
       )}
       <span className="rag-dot" style={{background: ragColor}} title={RAG_LABELS[row.rag]}></span>
     </div>
@@ -203,7 +208,7 @@ function TooltipCard({ item, position }) {
 }
 
 // --- Main Gantt Chart ---
-function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps, onExpandAll, onCollapseAll }) {
+function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps, onExpandAll, onCollapseAll, deltas }) {
   const scrollRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({x: 0, y: 0});
@@ -275,7 +280,7 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
                   </div>
                   <div className="gantt-chart-cell" style={{width: chartWidth, minWidth: chartWidth, position:'relative', height: ROW_HEIGHT}}>
                     {row.type !== 'stream-header' && (
-                      <TaskBar row={row} data={data} dayWidth={dayWidth} onHover={handleBarHover} onLeave={handleBarLeave} />
+                      <TaskBar row={row} data={data} dayWidth={dayWidth} onHover={handleBarHover} onLeave={handleBarLeave} delta={deltas ? deltas[row.id] : null} />
                     )}
                   </div>
                 </div>

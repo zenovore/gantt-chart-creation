@@ -333,6 +333,14 @@ body {
 .gantt-container::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
 .gantt-container::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 .gantt-container::-webkit-scrollbar-corner { background: var(--bg-secondary); }
+
+/* === Delta Badges (Compare Mode) === */
+.bar-delta {
+  position: relative; z-index: 1; font-size: 9px; font-weight: 700;
+  padding: 1px 4px; white-space: nowrap; border-radius: 2px; margin-left: 2px;
+}
+.bar-delta.positive { color: #fff; background: rgba(22, 163, 74, 0.85); }
+.bar-delta.negative { color: #fff; background: rgba(220, 38, 38, 0.85); }
 </style>
 </head>
 <body>
