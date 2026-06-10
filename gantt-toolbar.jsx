@@ -204,6 +204,8 @@ function Toolbar({
   onFitToScreen,
   onCompareUpload, onClearCompare, compareFileName,
   taskCount, subtaskCount,
+  notesOpen, onToggleNotes,
+  currentView, onViewChange,
 }) {
   const fileRef = useRef(null);
   const compareRef = useRef(null);
@@ -245,6 +247,25 @@ function Toolbar({
         </button>
         <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} />
         {!hasData && <button className="btn btn-sm" onClick={onLoadSample}>Load Sample</button>}
+        {hasData && (
+          <button className={`btn btn-sm ${currentView === 'issues' ? 'btn-primary' : ''}`}
+            onClick={() => onViewChange(currentView === 'issues' ? 'gantt' : 'issues')}
+            title="Issues & Blockers tracker">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Issues
+          </button>
+        )}
+        {hasData && (
+          <button className={`btn btn-sm ${notesOpen ? 'btn-primary' : ''}`} onClick={onToggleNotes} title="Daily notes panel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Notes
+          </button>
+        )}
         <ThemeToggle theme={theme} onChange={onThemeChange} />
       </div>
       {hasData && (

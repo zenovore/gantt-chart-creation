@@ -341,6 +341,199 @@ body {
 }
 .bar-delta.positive { color: #fff; background: rgba(22, 163, 74, 0.85); }
 .bar-delta.negative { color: #fff; background: rgba(220, 38, 38, 0.85); }
+
+/* === App Body (row layout for chart + notes) === */
+.app-body { display: flex; flex: 1; overflow: hidden; }
+.app-body > .gantt-container { flex: 1; min-width: 0; }
+
+/* === Notes Panel === */
+.notes-panel {
+  width: 380px; flex-shrink: 0; display: flex; flex-direction: column;
+  border-left: 1px solid var(--border); background: var(--bg-primary);
+  overflow: hidden;
+}
+.notes-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary); flex-shrink: 0;
+}
+.notes-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 700;
+}
+/* Notes selectors (date + stream) */
+.notes-selectors {
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary); flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.notes-date-nav {
+  display: flex; align-items: center; gap: 4px;
+}
+.notes-date-pick {
+  position: relative; flex: 1; min-width: 0;
+}
+.notes-date-input {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  width: 100%; font-family: inherit;
+}
+.notes-date-label {
+  display: block; text-align: center; font-size: 12px; font-weight: 600;
+  color: var(--accent); padding: 3px 6px; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.notes-date-label:hover { background: var(--bg-hover); }
+.notes-stream-nav {
+  display: flex; align-items: center; gap: 8px;
+}
+.notes-stream-label {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0;
+}
+.notes-stream-select {
+  flex: 1; min-width: 0; padding: 4px 8px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: inherit; cursor: pointer; outline: none;
+}
+.notes-stream-select:focus { border-color: var(--accent); }
+.notes-body { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+/* Note sections */
+.note-section { margin-bottom: 2px; }
+.note-section-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 600; color: var(--text-primary);
+}
+.note-section-header:hover { background: var(--bg-hover); }
+.note-section-icon { font-size: 12px; width: 16px; text-align: center; flex-shrink: 0; }
+.note-section-label { flex: 1; }
+.note-section-count {
+  font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+  background: var(--bg-tertiary); padding: 1px 6px; border-radius: 8px;
+}
+.note-section-body { padding: 0 14px 6px 36px; }
+
+/* Note items */
+.note-item {
+  display: flex; align-items: flex-start; gap: 6px; padding: 3px 0;
+  font-size: 12px; color: var(--text-primary); position: relative;
+  line-height: 1.4;
+}
+.note-item.resolved { opacity: 0.5; }
+.note-item.resolved .note-item-text { text-decoration: line-through; }
+.note-item-check {
+  background: none; border: none; cursor: pointer; padding: 0;
+  flex-shrink: 0; display: flex; align-items: center; margin-top: 1px;
+}
+.note-item-bullet { color: var(--text-tertiary); flex-shrink: 0; font-size: 10px; margin-top: 2px; }
+.note-item-text { flex: 1; min-width: 0; word-break: break-word; }
+.note-item-delete {
+  background: none; border: none; cursor: pointer; color: var(--text-tertiary);
+  font-size: 11px; padding: 0 2px; opacity: 0; transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.note-item:hover .note-item-delete { opacity: 1; }
+.note-item-delete:hover { color: #DC2626; }
+
+/* Note input */
+.note-input-row {
+  display: flex; align-items: center; gap: 6px; padding: 4px 0 2px;
+}
+.note-input-bullet { color: var(--accent); font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.note-input {
+  flex: 1; border: none; background: none; color: var(--text-primary);
+  font-size: 12px; outline: none; font-family: inherit;
+  border-bottom: 1px dashed var(--border); padding: 2px 0;
+}
+.note-input::placeholder { color: var(--text-tertiary); font-style: italic; }
+
+/* Previous notes */
+.notes-prev-section {
+  margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;
+}
+.notes-prev-title {
+  padding: 4px 14px 8px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary);
+}
+.notes-prev-day { border-bottom: 1px solid var(--border); }
+.notes-prev-day:last-child { border-bottom: none; }
+.notes-prev-day-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 12px;
+}
+.notes-prev-day-header:hover { background: var(--bg-hover); }
+.notes-prev-day-date { font-weight: 600; flex: 1; }
+.notes-prev-day-count { font-size: 10px; color: var(--text-tertiary); }
+.notes-prev-day-body { padding: 0 14px 10px 28px; }
+.prev-day-content {}
+.prev-section { margin-bottom: 6px; }
+.prev-section-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
+.prev-item { font-size: 11px; color: var(--text-primary); padding: 1px 0; line-height: 1.4; }
+.prev-item.resolved { opacity: 0.5; text-decoration: line-through; }
+
+/* === Issues Page === */
+.issues-page {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg-primary);
+}
+.issues-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary); flex-shrink: 0;
+}
+.issues-title { font-size: 16px; font-weight: 700; }
+.issues-stats { display: flex; gap: 10px; font-size: 12px; }
+.issues-stat {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: 11px;
+}
+.issues-stat.open { background: #FEF3C7; color: #92400E; }
+.issues-stat.resolved { background: #DCFCE7; color: #166534; }
+[data-theme="dark"] .issues-stat.open { background: #78350F; color: #FCD34D; }
+[data-theme="dark"] .issues-stat.resolved { background: #14532D; color: #86EFAC; }
+.issues-filters {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.issues-list { flex: 1; overflow-y: auto; padding: 12px 20px; }
+.issues-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; padding: 60px 20px;
+  color: var(--text-secondary); font-size: 13px;
+}
+
+/* Issue card */
+.issue-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px; margin-bottom: 8px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-primary); transition: all 0.12s;
+}
+.issue-card:hover { background: var(--bg-hover); box-shadow: var(--shadow); }
+.issue-card.resolved { opacity: 0.6; }
+.issue-card.resolved .issue-text { text-decoration: line-through; }
+.issue-check {
+  background: none; border: none; cursor: pointer; padding: 0;
+  flex-shrink: 0; margin-top: 1px;
+}
+.issue-content { flex: 1; min-width: 0; }
+.issue-text { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
+.issue-meta { display: flex; align-items: center; gap: 8px; }
+.issue-type-badge {
+  font-size: 10px; font-weight: 600; padding: 1px 8px;
+  border-radius: 8px;
+}
+.issue-type-badge.blocker { background: #FEE2E2; color: #991B1B; }
+.issue-type-badge.issue { background: #FEF3C7; color: #92400E; }
+[data-theme="dark"] .issue-type-badge.blocker { background: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .issue-type-badge.issue { background: #78350F; color: #FCD34D; }
+.issue-stream-badge {
+  font-size: 10px; font-weight: 600; padding: 1px 8px;
+  border-radius: 8px; background: var(--bg-tertiary); color: var(--text-secondary);
+}
+.issue-date { font-size: 11px; color: var(--text-tertiary); }
 </style>
 </head>
 <body>
@@ -348,6 +541,8 @@ body {
 <script src="gantt-utils.js"></script>
 <script type="text/babel" src="gantt-toolbar.jsx"></script>
 <script type="text/babel" src="gantt-chart.jsx"></script>
+<script type="text/babel" src="gantt-notes.jsx"></script>
+<script type="text/babel" src="gantt-issues.jsx"></script>
 <script type="text/babel" src="gantt-app.jsx"></script>
 </body>
 </html>

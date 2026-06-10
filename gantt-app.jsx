@@ -73,6 +73,9 @@ function App() {
   const [dayWidth, setDayWidth] = useState(5);
   const [compareData, setCompareData] = useState(null);
   const [compareFileName, setCompareFileName] = useState(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('gantt');
+  const [allNotes, setAllNotes] = useState(() => loadNotes());
 
   // Theme persistence
   useEffect(() => {
@@ -242,6 +245,11 @@ function App() {
     else setError('Please drop a .csv file');
   }, [handleUpload]);
 
+  const handleNotesChange = useCallback((updated) => {
+    setAllNotes(updated);
+    saveNotes(updated);
+  }, []);
+
   const taskCount = filteredTasks.length;
   const subtaskCount = filteredTasks.reduce((a, t) => a + t.subtasks.length, 0);
 
@@ -266,6 +274,8 @@ function App() {
         onClearCompare={handleClearCompare}
         compareFileName={compareFileName}
         taskCount={taskCount} subtaskCount={subtaskCount}
+        notesOpen={notesOpen} onToggleNotes={() => setNotesOpen(o => !o)}
+        currentView={currentView} onViewChange={setCurrentView}
       />
       {processedData && <Legend streams={processedData.streams} streamColors={processedData.streamColors} />}
       {error && (
@@ -292,17 +302,26 @@ function App() {
           </button>
         </div>
       ) : (
-        <GanttChart
-          data={processedData}
-          flatRows={flatRows}
-          expanded={expanded}
-          toggleExpand={toggleExpand}
-          onExpandAll={expandAll}
-          onCollapseAll={collapseAll}
-          dayWidth={dayWidth}
-          showDeps={showDeps}
-          deltas={deltas}
-        />
+        <div className="app-body">
+          {currentView === 'gantt' ? (
+            <GanttChart
+              data={processedData}
+              flatRows={flatRows}
+              expanded={expanded}
+              toggleExpand={toggleExpand}
+              onExpandAll={expandAll}
+              onCollapseAll={collapseAll}
+              dayWidth={dayWidth}
+              showDeps={showDeps}
+              deltas={deltas}
+            />
+          ) : (
+            <IssuesPage allNotes={allNotes} onNotesChange={handleNotesChange} onBack={() => setCurrentView('gantt')} streams={processedData ? processedData.streams : []} />
+          )}
+          {notesOpen && (
+            <NotesPanel onClose={() => setNotesOpen(false)} allNotes={allNotes} onNotesChange={handleNotesChange} streams={processedData ? processedData.streams : []} />
+          )}
+        </div>
       )}
     </div>
   );
