@@ -201,13 +201,22 @@ function Toolbar({
   dayWidth, onDayWidthChange,
   theme, onThemeChange,
   onUpload, onLoadSample, onExportSVG,
-  onFitToScreen,
+  onFitToScreen, onDownloadCSV,
+  onCompareUpload, onClearCompare, compareFileName,
   taskCount, subtaskCount,
+  notesOpen, onToggleNotes,
+  currentView, onViewChange,
 }) {
   const fileRef = useRef(null);
+  const compareRef = useRef(null);
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (file) onUpload(file);
+    e.target.value = '';
+  };
+  const handleCompareFile = (e) => {
+    const file = e.target.files[0];
+    if (file) onCompareUpload(file);
     e.target.value = '';
   };
 
@@ -219,12 +228,44 @@ function Toolbar({
         {hasData && <span style={{fontSize:11, color:'var(--text-tertiary)'}}>
           {taskCount} tasks · {subtaskCount} subtasks
         </span>}
+        {hasData && !compareFileName && (
+          <button className="btn btn-sm" onClick={() => compareRef.current.click()}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="3" x2="10" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="21" y1="21" x2="14" y2="14"/></svg>
+            Compare...
+          </button>
+        )}
+        {hasData && compareFileName && (
+          <button className="btn btn-sm btn-primary" onClick={onClearCompare} title="Clear comparison">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="3" x2="10" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="21" y1="21" x2="14" y2="14"/></svg>
+            vs {compareFileName} ✕
+          </button>
+        )}
+        <input ref={compareRef} type="file" accept=".csv" onChange={handleCompareFile} style={{display:'none'}} />
         <button className="btn btn-sm btn-primary" onClick={() => fileRef.current.click()}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
           Upload CSV
         </button>
         <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} />
         {!hasData && <button className="btn btn-sm" onClick={onLoadSample}>Load Sample</button>}
+        {hasData && (
+          <button className={`btn btn-sm ${currentView === 'issues' ? 'btn-primary' : ''}`}
+            onClick={() => onViewChange(currentView === 'issues' ? 'gantt' : 'issues')}
+            title="Issues & Blockers tracker">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Issues
+          </button>
+        )}
+        {hasData && (
+          <button className={`btn btn-sm ${notesOpen ? 'btn-primary' : ''}`} onClick={onToggleNotes} title="Daily notes panel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Notes
+          </button>
+        )}
         <ThemeToggle theme={theme} onChange={onThemeChange} />
       </div>
       {hasData && (
@@ -241,6 +282,10 @@ function Toolbar({
           <div style={{width: 1, height: 24, background: 'var(--border)'}}></div>
           <ZoomControl dayWidth={dayWidth} onChange={onDayWidthChange} onFit={onFitToScreen} />
           <div style={{flex:1}}></div>
+          <button className="btn btn-sm" onClick={onDownloadCSV}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download CSV
+          </button>
           <button className="btn btn-sm" onClick={onExportSVG}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
             Export SVG

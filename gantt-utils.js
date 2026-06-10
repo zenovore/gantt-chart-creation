@@ -130,7 +130,7 @@ function processCSVData(rows) {
       const subs = t.subtasks.filter(s => s.startDate && s.endDate);
       if (!t.startDate && subs.length) t.startDate = new Date(Math.min(...subs.map(s => s.startDate.getTime())));
       if (!t.endDate && subs.length) t.endDate = new Date(Math.max(...subs.map(s => s.endDate.getTime())));
-      if (t.progress === 0 && subs.length) {
+      if (subs.length) {
         t.progress = Math.round(subs.reduce((a, s) => a + s.progress, 0) / subs.length);
       }
       t.rag = calculateRAG(t.startDate, t.endDate, t.progress, today);
@@ -140,12 +140,12 @@ function processCSVData(rows) {
   let minDate = null, maxDate = null;
   const allItems = [];
   tasks.forEach(t => {
-    if (t.startDate && t.endDate) allItems.push(t);
-    t.subtasks.forEach(s => { if (s.startDate && s.endDate) allItems.push(s); });
+    if (t.startDate || t.endDate) allItems.push(t);
+    t.subtasks.forEach(s => { if (s.startDate || s.endDate) allItems.push(s); });
   });
   allItems.forEach(item => {
-    if (!minDate || item.startDate < minDate) minDate = new Date(item.startDate);
-    if (!maxDate || item.endDate > maxDate) maxDate = new Date(item.endDate);
+    if (item.startDate && (!minDate || item.startDate < minDate)) minDate = new Date(item.startDate);
+    if (item.endDate && (!maxDate || item.endDate > maxDate)) maxDate = new Date(item.endDate);
   });
   if (minDate) minDate = startOfMonth(addDays(minDate, -3));
   if (maxDate) maxDate = addDays(maxDate, 14);
@@ -291,11 +291,41 @@ OIT-08,OIT-08-001,API Integration Platform,API Gateway Setup,Application Dev,Dep
 OIT-08,OIT-08-002,API Integration Platform,Core API Development,Application Dev,Develop core REST APIs for key business services,16-Apr-2026,30-Jun-2026,45,OIT-08-001
 OIT-08,OIT-08-003,API Integration Platform,Third-Party Integrations,Application Dev,Build integrations with external vendor systems,01-Jun-2026,31-Jul-2026,5,OIT-08-002`;
 
+function formatDateKey(d) {
+  if (!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// === CSV Export ===
+function generateCSVExport(rows) {
+  const headers = ['task_id','subtask_id','task','subtask','stream','description','start_date','end_date','progress','dependencies'];
+  const escape = (v) => {
+    const s = String(v || '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [headers.join(',')];
+  rows.forEach(row => {
+    lines.push([
+      escape(row.task_id || ''),
+      escape(row.subtask_id || ''),
+      escape(row.task || ''),
+      escape(row.subtask || ''),
+      escape(row.stream || ''),
+      escape(row.description || ''),
+      escape(row.start_date || ''),
+      escape(row.end_date || ''),
+      escape(row.progress || ''),
+      escape(row.dependencies || '')
+    ].join(','));
+  });
+  return lines.join('\n');
+}
+
 // Expose everything globally
 Object.assign(window, {
-  parseDate, formatDate, diffDays, addDays, startOfWeek, startOfMonth,
+  parseDate, formatDate, formatDateKey, diffDays, addDays, startOfWeek, startOfMonth,
   calculateRAG, RAG_COLORS, RAG_BG, RAG_LABELS, STREAM_COLORS, MONTH_NAMES, MONTH_FULL,
   validateCSVColumns, processCSVData,
   getMonthHeaders, getWeekHeaders,
-  generateSVGExport, escapeXML, SAMPLE_CSV_TEXT
+  generateSVGExport, escapeXML, SAMPLE_CSV_TEXT, generateCSVExport
 });

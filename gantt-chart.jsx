@@ -75,24 +75,87 @@ function GridLines({ data, dayWidth, chartWidth, totalHeight }) {
 }
 
 // --- Task Bar ---
-function TaskBar({ row, data, dayWidth, onHover, onLeave }) {
-  if (!row.startDate || !row.endDate) return null;
-  const left = diffDays(data.timelineStart, row.startDate) * dayWidth;
-  const width = Math.max(3, diffDays(row.startDate, row.endDate) * dayWidth);
-  const fillW = width * (row.progress / 100);
+function TaskBar({ row, data, dayWidth, onHover, onLeave, delta, onDateClick }) {
   const color = data.streamColors[row.stream] || '#888';
   const ragColor = RAG_COLORS[row.rag];
   const isParent = row.type === 'task' && row.hasChildren;
+  const barHeight = isParent ? ROW_HEIGHT - 16 : ROW_HEIGHT - 14;
+  const barTop = isParent ? 8 : 7;
+
+  if (!row.startDate && !row.endDate) {
+    const chartMid = diffDays(data.timelineStart, data.today) * dayWidth;
+    const placeholderLeft = Math.max(0, chartMid - 40);
+    return (
+      <div className="task-bar task-bar-empty"
+        style={{left: placeholderLeft, width: 80, height: barHeight, top: barTop, borderStyle: 'dashed', borderWidth: 1.5, borderColor: color, background: 'none', opacity: 0.6, cursor: 'pointer'}}
+        onClick={(e) => onDateClick && onDateClick(row, 'start', e)}
+        title="Click to set dates">
+        <span style={{fontSize: 10, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', padding: '0 4px'}}>No dates</span>
+      </div>
+    );
+  }
+
+  if (!row.startDate) {
+    const endX = diffDays(data.timelineStart, row.endDate) * dayWidth;
+    const placeholderLeft = Math.max(0, endX - 60);
+    return (
+      <React.Fragment>
+        <div className="task-bar task-bar-empty"
+          style={{left: placeholderLeft, width: 40, height: barHeight, top: barTop, borderStyle: 'dashed', borderWidth: 1.5, borderColor: color, background: 'none', opacity: 0.6, cursor: 'pointer'}}
+          onClick={(e) => onDateClick && onDateClick(row, 'start', e)}
+          title="Click to set start date">
+          <span style={{fontSize: 9, color: 'var(--text-tertiary)', whiteSpace: 'nowrap'}}>+start</span>
+        </div>
+        <div className="task-bar"
+          style={{left: endX - 6, width: 12, height: barHeight, top: barTop}}
+          onMouseEnter={(e) => onHover(row, e)} onMouseLeave={onLeave}>
+          <div className="bar-bg" style={{background: color}}></div>
+          <span className="bar-endpoint bar-end" style={{position:'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '50%', background: color, border: '2px solid var(--bg-primary)'}}></span>
+        </div>
+      </React.Fragment>
+    );
+  }
+
+  if (!row.endDate) {
+    const startX = diffDays(data.timelineStart, row.startDate) * dayWidth;
+    return (
+      <React.Fragment>
+        <div className="task-bar"
+          style={{left: startX, width: 12, height: barHeight, top: barTop}}
+          onMouseEnter={(e) => onHover(row, e)} onMouseLeave={onLeave}>
+          <div className="bar-bg" style={{background: color}}></div>
+          <span className="bar-endpoint bar-start" style={{position:'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '50%', background: color, border: '2px solid var(--bg-primary)'}}></span>
+        </div>
+        <div className="task-bar task-bar-empty"
+          style={{left: startX + 18, width: 40, height: barHeight, top: barTop, borderStyle: 'dashed', borderWidth: 1.5, borderColor: color, background: 'none', opacity: 0.6, cursor: 'pointer'}}
+          onClick={(e) => onDateClick && onDateClick(row, 'end', e)}
+          title="Click to set end date">
+          <span style={{fontSize: 9, color: 'var(--text-tertiary)', whiteSpace: 'nowrap'}}>+end</span>
+        </div>
+      </React.Fragment>
+    );
+  }
+
+  const left = diffDays(data.timelineStart, row.startDate) * dayWidth;
+  const width = Math.max(3, diffDays(row.startDate, row.endDate) * dayWidth);
+  const fillW = width * (row.progress / 100);
 
   return (
     <div className="task-bar"
-      style={{left, width, height: isParent ? ROW_HEIGHT - 16 : ROW_HEIGHT - 14, top: isParent ? 8 : 7}}
+      style={{left, width, height: barHeight, top: barTop}}
       onMouseEnter={(e) => onHover(row, e)}
       onMouseLeave={onLeave}>
       <div className="bar-bg" style={{background: color}}></div>
       <div className="bar-fill" style={{width: fillW, background: color}}></div>
+      <span className="bar-endpoint bar-start" style={{position:'absolute', left: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '2px', background: color, border: '2px solid var(--bg-primary)', zIndex: 2}}></span>
+      <span className="bar-endpoint bar-end" style={{position:'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '2px', background: color, border: '2px solid var(--bg-primary)', zIndex: 2}}></span>
       {width > 32 && (
         <span className="bar-label">{row.progress}%</span>
+      )}
+      {delta != null && delta !== 0 && width > 50 && (
+        <span className={`bar-delta ${delta > 0 ? 'positive' : 'negative'}`}>
+          {delta > 0 ? '+' : ''}{delta}%
+        </span>
       )}
       <span className="rag-dot" style={{background: ragColor}} title={RAG_LABELS[row.rag]}></span>
     </div>
@@ -202,11 +265,61 @@ function TooltipCard({ item, position }) {
   );
 }
 
+// --- Date Edit Popover ---
+function DateEditPopover({ target, onSave, onClose }) {
+  const [value, setValue] = useState('');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (ref.current) {
+      const input = ref.current.querySelector('input[type="date"]');
+      if (input) input.focus();
+    }
+  }, []);
+
+  const handleSave = () => {
+    if (!value) return;
+    const parts = value.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    if (!isNaN(d.getTime())) onSave(d);
+  };
+
+  return ReactDOM.createPortal(
+    <div ref={ref} style={{
+      position: 'fixed', left: target.x, top: target.y,
+      background: 'var(--bg-primary)', border: '1px solid var(--border)',
+      borderRadius: 8, padding: 12, boxShadow: 'var(--shadow-lg)', zIndex: 1000,
+      display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180
+    }}>
+      <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-primary)'}}>
+        Set {target.field === 'start' ? 'Start' : 'End'} Date
+      </div>
+      <input type="date" value={value} onChange={e => setValue(e.target.value)}
+        style={{padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, fontFamily: 'inherit', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none'}}
+        onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') onClose(); }} />
+      <div style={{display: 'flex', gap: 6, justifyContent: 'flex-end'}}>
+        <button className="btn btn-sm" onClick={onClose}>Cancel</button>
+        <button className="btn btn-sm btn-primary" onClick={handleSave}>Save</button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // --- Main Gantt Chart ---
-function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps, onExpandAll, onCollapseAll }) {
+function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps, onExpandAll, onCollapseAll, deltas, onUpdateDate }) {
   const scrollRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({x: 0, y: 0});
+  const [dateEdit, setDateEdit] = useState(null);
 
   const chartWidth = useMemo(() => {
     if (!data.timelineStart || !data.timelineEnd) return 800;
@@ -239,7 +352,25 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
 
   const handleBarLeave = useCallback(() => setTooltip(null), []);
 
-  if (!data.timelineStart) return null;
+  const handleDateClick = useCallback((row, field, e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDateEdit({ row, field, x: rect.left, y: rect.bottom + 4 });
+  }, []);
+
+  const handleDateSave = useCallback((d) => {
+    if (dateEdit && onUpdateDate) {
+      onUpdateDate(dateEdit.row.id, dateEdit.field, d);
+    }
+    setDateEdit(null);
+  }, [dateEdit, onUpdateDate]);
+
+  if (!data.timelineStart) {
+    return (
+      <div className="gantt-container" style={{display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-tertiary)',fontSize:13,padding:'60px 0'}}>
+        No tasks with dates to display. Set dates on tasks to see the chart.
+      </div>
+    );
+  }
 
   return (
     <div className="gantt-container" ref={scrollRef}>
@@ -275,7 +406,7 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
                   </div>
                   <div className="gantt-chart-cell" style={{width: chartWidth, minWidth: chartWidth, position:'relative', height: ROW_HEIGHT}}>
                     {row.type !== 'stream-header' && (
-                      <TaskBar row={row} data={data} dayWidth={dayWidth} onHover={handleBarHover} onLeave={handleBarLeave} />
+                      <TaskBar row={row} data={data} dayWidth={dayWidth} onHover={handleBarHover} onLeave={handleBarLeave} delta={deltas ? deltas[row.id] : null} onDateClick={handleDateClick} />
                     )}
                   </div>
                 </div>
@@ -293,6 +424,7 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
 
       {/* Tooltip */}
       <TooltipCard item={tooltip} position={tooltipPos} />
+      {dateEdit && <DateEditPopover target={dateEdit} onSave={handleDateSave} onClose={() => setDateEdit(null)} />}
     </div>
   );
 }

@@ -71,6 +71,11 @@ function App() {
   const [groupBy, setGroupBy] = useState('hierarchy');
   const [expanded, setExpanded] = useState(new Set());
   const [dayWidth, setDayWidth] = useState(5);
+  const [compareData, setCompareData] = useState(null);
+  const [compareFileName, setCompareFileName] = useState(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('gantt');
+  const [allNotes, setAllNotes] = useState(() => loadNotes());
 
   // Theme persistence
   useEffect(() => {
@@ -98,6 +103,24 @@ function App() {
       }
     }
   }, [processedData]);
+
+  // Compute deltas when comparing two CSVs
+  const deltas = useMemo(() => {
+    if (!processedData || !compareData) return null;
+    const map = {};
+    const compareMap = {};
+    compareData.tasks.forEach(t => {
+      compareMap[t.id] = t.progress;
+      t.subtasks.forEach(s => { compareMap[s.id] = s.progress; });
+    });
+    processedData.tasks.forEach(t => {
+      if (compareMap[t.id] != null) map[t.id] = t.progress - compareMap[t.id];
+      t.subtasks.forEach(s => {
+        if (compareMap[s.id] != null) map[s.id] = s.progress - compareMap[s.id];
+      });
+    });
+    return map;
+  }, [processedData, compareData]);
 
   // Filter and flatten
   const filteredTasks = useMemo(() => {
@@ -165,6 +188,35 @@ function App() {
     });
   }, []);
 
+  // Compare CSV upload
+  const handleCompareUpload = useCallback((file) => {
+    setError(null);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (!results.data || results.data.length === 0) {
+          setError('Compare CSV is empty or could not be parsed.');
+          return;
+        }
+        const headers = Object.keys(results.data[0]);
+        const validation = validateCSVColumns(headers);
+        if (!validation.valid) {
+          setError(`Compare CSV missing columns: ${validation.missing.join(', ')}`);
+          return;
+        }
+        setCompareData(processCSVData(results.data));
+        setCompareFileName(file.name);
+      },
+      error: (err) => setError(`Compare parse error: ${err.message}`),
+    });
+  }, []);
+
+  const handleClearCompare = useCallback(() => {
+    setCompareData(null);
+    setCompareFileName(null);
+  }, []);
+
   // Load sample
   const handleLoadSample = useCallback(() => {
     setError(null);
@@ -184,6 +236,34 @@ function App() {
     document.body.removeChild(a); URL.revokeObjectURL(url);
   }, [processedData, flatRows, dayWidth]);
 
+  // CSV download
+  const handleDownloadCSV = useCallback(() => {
+    if (!rawData) return;
+    const csv = generateCSVExport(rawData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'gantt-data.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }, [rawData]);
+
+  // Update date for a task/subtask
+  const handleUpdateDate = useCallback((itemId, field, date) => {
+    if (!rawData) return;
+    const updated = rawData.map(row => {
+      const rowId = (row.subtask_id || '').trim() || (row.task_id || '').trim();
+      if (rowId === itemId) {
+        const copy = { ...row };
+        if (field === 'start') copy.start_date = formatDate(date);
+        if (field === 'end') copy.end_date = formatDate(date);
+        return copy;
+      }
+      return row;
+    });
+    setRawData(updated);
+  }, [rawData]);
+
   // Drag and drop
   const handleDragOver = useCallback((e) => { e.preventDefault(); e.stopPropagation(); }, []);
   const handleDrop = useCallback((e) => {
@@ -192,6 +272,11 @@ function App() {
     if (file && file.name.endsWith('.csv')) handleUpload(file);
     else setError('Please drop a .csv file');
   }, [handleUpload]);
+
+  const handleNotesChange = useCallback((updated) => {
+    setAllNotes(updated);
+    saveNotes(updated);
+  }, []);
 
   const taskCount = filteredTasks.length;
   const subtaskCount = filteredTasks.reduce((a, t) => a + t.subtasks.length, 0);
@@ -212,8 +297,14 @@ function App() {
         theme={theme} onThemeChange={setTheme}
         onUpload={handleUpload} onLoadSample={handleLoadSample}
         onExportSVG={handleExportSVG}
+        onDownloadCSV={handleDownloadCSV}
         onFitToScreen={handleFitToScreen}
+        onCompareUpload={handleCompareUpload}
+        onClearCompare={handleClearCompare}
+        compareFileName={compareFileName}
         taskCount={taskCount} subtaskCount={subtaskCount}
+        notesOpen={notesOpen} onToggleNotes={() => setNotesOpen(o => !o)}
+        currentView={currentView} onViewChange={setCurrentView}
       />
       {processedData && <Legend streams={processedData.streams} streamColors={processedData.streamColors} />}
       {error && (
@@ -240,16 +331,27 @@ function App() {
           </button>
         </div>
       ) : (
-        <GanttChart
-          data={processedData}
-          flatRows={flatRows}
-          expanded={expanded}
-          toggleExpand={toggleExpand}
-          onExpandAll={expandAll}
-          onCollapseAll={collapseAll}
-          dayWidth={dayWidth}
-          showDeps={showDeps}
-        />
+        <div className="app-body">
+          {currentView === 'gantt' ? (
+            <GanttChart
+              data={processedData}
+              flatRows={flatRows}
+              expanded={expanded}
+              toggleExpand={toggleExpand}
+              onExpandAll={expandAll}
+              onCollapseAll={collapseAll}
+              dayWidth={dayWidth}
+              showDeps={showDeps}
+              deltas={deltas}
+              onUpdateDate={handleUpdateDate}
+            />
+          ) : (
+            <IssuesPage allNotes={allNotes} onNotesChange={handleNotesChange} onBack={() => setCurrentView('gantt')} streams={processedData ? processedData.streams : []} />
+          )}
+          {notesOpen && (
+            <NotesPanel onClose={() => setNotesOpen(false)} allNotes={allNotes} onNotesChange={handleNotesChange} streams={processedData ? processedData.streams : []} />
+          )}
+        </div>
       )}
     </div>
   );
