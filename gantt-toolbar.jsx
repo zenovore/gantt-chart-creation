@@ -202,13 +202,19 @@ function Toolbar({
   theme, onThemeChange,
   onUpload, onLoadSample, onExportSVG,
   onFitToScreen,
-  onToggleTracker, trackerOpen,
+  onCompareUpload, onClearCompare, compareFileName,
   taskCount, subtaskCount,
 }) {
   const fileRef = useRef(null);
+  const compareRef = useRef(null);
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (file) onUpload(file);
+    e.target.value = '';
+  };
+  const handleCompareFile = (e) => {
+    const file = e.target.files[0];
+    if (file) onCompareUpload(file);
     e.target.value = '';
   };
 
@@ -220,12 +226,19 @@ function Toolbar({
         {hasData && <span style={{fontSize:11, color:'var(--text-tertiary)'}}>
           {taskCount} tasks · {subtaskCount} subtasks
         </span>}
-        {hasData && (
-          <button className={`btn btn-sm ${trackerOpen ? 'btn-primary' : ''}`} onClick={onToggleTracker}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-            Tracker
+        {hasData && !compareFileName && (
+          <button className="btn btn-sm" onClick={() => compareRef.current.click()}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="3" x2="10" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="21" y1="21" x2="14" y2="14"/></svg>
+            Compare...
           </button>
         )}
+        {hasData && compareFileName && (
+          <button className="btn btn-sm btn-primary" onClick={onClearCompare} title="Clear comparison">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="3" x2="10" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="21" y1="21" x2="14" y2="14"/></svg>
+            vs {compareFileName} ✕
+          </button>
+        )}
+        <input ref={compareRef} type="file" accept=".csv" onChange={handleCompareFile} style={{display:'none'}} />
         <button className="btn btn-sm btn-primary" onClick={() => fileRef.current.click()}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
           Upload CSV
