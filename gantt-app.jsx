@@ -236,6 +236,34 @@ function App() {
     document.body.removeChild(a); URL.revokeObjectURL(url);
   }, [processedData, flatRows, dayWidth]);
 
+  // CSV download
+  const handleDownloadCSV = useCallback(() => {
+    if (!rawData) return;
+    const csv = generateCSVExport(rawData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'gantt-data.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }, [rawData]);
+
+  // Update date for a task/subtask
+  const handleUpdateDate = useCallback((itemId, field, date) => {
+    if (!rawData) return;
+    const updated = rawData.map(row => {
+      const rowId = (row.subtask_id || '').trim() || (row.task_id || '').trim();
+      if (rowId === itemId) {
+        const copy = { ...row };
+        if (field === 'start') copy.start_date = formatDate(date);
+        if (field === 'end') copy.end_date = formatDate(date);
+        return copy;
+      }
+      return row;
+    });
+    setRawData(updated);
+  }, [rawData]);
+
   // Drag and drop
   const handleDragOver = useCallback((e) => { e.preventDefault(); e.stopPropagation(); }, []);
   const handleDrop = useCallback((e) => {
@@ -269,6 +297,7 @@ function App() {
         theme={theme} onThemeChange={setTheme}
         onUpload={handleUpload} onLoadSample={handleLoadSample}
         onExportSVG={handleExportSVG}
+        onDownloadCSV={handleDownloadCSV}
         onFitToScreen={handleFitToScreen}
         onCompareUpload={handleCompareUpload}
         onClearCompare={handleClearCompare}
@@ -314,6 +343,7 @@ function App() {
               dayWidth={dayWidth}
               showDeps={showDeps}
               deltas={deltas}
+              onUpdateDate={handleUpdateDate}
             />
           ) : (
             <IssuesPage allNotes={allNotes} onNotesChange={handleNotesChange} onBack={() => setCurrentView('gantt')} streams={processedData ? processedData.streams : []} />

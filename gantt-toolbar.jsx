@@ -201,7 +201,7 @@ function Toolbar({
   dayWidth, onDayWidthChange,
   theme, onThemeChange,
   onUpload, onLoadSample, onExportSVG,
-  onFitToScreen,
+  onFitToScreen, onDownloadCSV,
   onCompareUpload, onClearCompare, compareFileName,
   taskCount, subtaskCount,
   notesOpen, onToggleNotes,
@@ -282,6 +282,10 @@ function Toolbar({
           <div style={{width: 1, height: 24, background: 'var(--border)'}}></div>
           <ZoomControl dayWidth={dayWidth} onChange={onDayWidthChange} onFit={onFitToScreen} />
           <div style={{flex:1}}></div>
+          <button className="btn btn-sm" onClick={onDownloadCSV}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download CSV
+          </button>
           <button className="btn btn-sm" onClick={onExportSVG}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
             Export SVG
