@@ -130,7 +130,7 @@ function processCSVData(rows) {
       const subs = t.subtasks.filter(s => s.startDate && s.endDate);
       if (!t.startDate && subs.length) t.startDate = new Date(Math.min(...subs.map(s => s.startDate.getTime())));
       if (!t.endDate && subs.length) t.endDate = new Date(Math.max(...subs.map(s => s.endDate.getTime())));
-      if (t.progress === 0 && subs.length) {
+      if (subs.length) {
         t.progress = Math.round(subs.reduce((a, s) => a + s.progress, 0) / subs.length);
       }
       t.rag = calculateRAG(t.startDate, t.endDate, t.progress, today);
