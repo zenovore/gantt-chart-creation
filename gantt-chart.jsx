@@ -147,8 +147,8 @@ function TaskBar({ row, data, dayWidth, onHover, onLeave, delta, onDateClick }) 
       onMouseLeave={onLeave}>
       <div className="bar-bg" style={{background: color}}></div>
       <div className="bar-fill" style={{width: fillW, background: color}}></div>
-      <span className="bar-endpoint bar-start" style={{position:'absolute', left: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '2px', background: color, border: '2px solid var(--bg-primary)', zIndex: 2}}></span>
-      <span className="bar-endpoint bar-end" style={{position:'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 8, borderRadius: '2px', background: color, border: '2px solid var(--bg-primary)', zIndex: 2}}></span>
+      <span className="bar-endpoint bar-start" onClick={(e) => { e.stopPropagation(); onDateClick && onDateClick(row, 'start', e); }} title={`Start: ${formatDate(row.startDate)} — click to change`} style={{position:'absolute', left: -4, top: '50%', transform: 'translateY(-50%)', width: 10, height: 10, borderRadius: '2px', background: color, border: '2px solid var(--bg-primary)', zIndex: 2, cursor: 'pointer'}}></span>
+      <span className="bar-endpoint bar-end" onClick={(e) => { e.stopPropagation(); onDateClick && onDateClick(row, 'end', e); }} title={`End: ${formatDate(row.endDate)} — click to change`} style={{position:'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 10, height: 10, borderRadius: '2px', background: color, border: '2px solid var(--bg-primary)', zIndex: 2, cursor: 'pointer'}}></span>
       {width > 32 && (
         <span className="bar-label">{row.progress}%</span>
       )}
@@ -267,7 +267,9 @@ function TooltipCard({ item, position }) {
 
 // --- Date Edit Popover ---
 function DateEditPopover({ target, onSave, onClose }) {
-  const [value, setValue] = useState('');
+  const existingDate = target.field === 'start' ? target.row.startDate : target.row.endDate;
+  const initialValue = existingDate ? formatDateKey(existingDate) : '';
+  const [value, setValue] = useState(initialValue);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -300,7 +302,7 @@ function DateEditPopover({ target, onSave, onClose }) {
       display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180
     }}>
       <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-primary)'}}>
-        Set {target.field === 'start' ? 'Start' : 'End'} Date
+        {existingDate ? 'Change' : 'Set'} {target.field === 'start' ? 'Start' : 'End'} Date
       </div>
       <input type="date" value={value} onChange={e => setValue(e.target.value)}
         style={{padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 12, fontFamily: 'inherit', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none'}}
