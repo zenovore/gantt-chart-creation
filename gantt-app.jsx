@@ -152,13 +152,22 @@ function App() {
     }
   }, [processedData]);
 
+  const [csvDelimiter, setCsvDelimiter] = useState(',');
+
   // CSV upload handler
   const handleUpload = useCallback((file) => {
     setError(null);
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      const firstLine = text.split('\n')[0];
+      const delim = firstLine.includes('|') ? '|' : ',';
+      setCsvDelimiter(delim);
+      Papa.parse(text, {
+        delimiter: delim,
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
         if (!results.data || results.data.length === 0) {
           setError('CSV file is empty or could not be parsed.');
           return;
@@ -186,30 +195,40 @@ function App() {
       },
       error: (err) => setError(`Parse error: ${err.message}`),
     });
+    };
+    reader.readAsText(file);
   }, []);
 
   // Compare CSV upload
   const handleCompareUpload = useCallback((file) => {
     setError(null);
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        if (!results.data || results.data.length === 0) {
-          setError('Compare CSV is empty or could not be parsed.');
-          return;
-        }
-        const headers = Object.keys(results.data[0]);
-        const validation = validateCSVColumns(headers);
-        if (!validation.valid) {
-          setError(`Compare CSV missing columns: ${validation.missing.join(', ')}`);
-          return;
-        }
-        setCompareData(processCSVData(results.data));
-        setCompareFileName(file.name);
-      },
-      error: (err) => setError(`Compare parse error: ${err.message}`),
-    });
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target.result;
+      const firstLine = text.split('\n')[0];
+      const delim = firstLine.includes('|') ? '|' : ',';
+      Papa.parse(text, {
+        delimiter: delim,
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (!results.data || results.data.length === 0) {
+            setError('Compare CSV is empty or could not be parsed.');
+            return;
+          }
+          const headers = Object.keys(results.data[0]);
+          const validation = validateCSVColumns(headers);
+          if (!validation.valid) {
+            setError(`Compare CSV missing columns: ${validation.missing.join(', ')}`);
+            return;
+          }
+          setCompareData(processCSVData(results.data));
+          setCompareFileName(file.name);
+        },
+        error: (err) => setError(`Compare parse error: ${err.message}`),
+      });
+    };
+    reader.readAsText(file);
   }, []);
 
   const handleClearCompare = useCallback(() => {
@@ -239,14 +258,14 @@ function App() {
   // CSV download
   const handleDownloadCSV = useCallback(() => {
     if (!rawData) return;
-    const csv = generateCSVExport(rawData);
+    const csv = generateCSVExport(rawData, csvDelimiter);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'gantt-data.csv';
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
-  }, [rawData]);
+  }, [rawData, csvDelimiter]);
 
   // Update date for a task/subtask
   const handleUpdateDate = useCallback((itemId, field, date) => {
@@ -323,7 +342,7 @@ function App() {
             <h2>Upload a CSV file</h2>
             <p>Drag & drop or click to browse</p>
             <p style={{marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)'}}>
-              Required columns: task_id, subtask_id, task, subtask, stream, description, start_date, end_date, progress, dependencies
+              Required: task_id, task, subtask, stream, start_date, end_date — Optional: subtask_id, description, progress, dependencies
             </p>
           </div>
           <button className="btn" onClick={handleLoadSample}>
