@@ -297,18 +297,20 @@ function formatDateKey(d) {
 }
 
 // === CSV Export ===
-function generateCSVExport(rows) {
+function generateCSVExport(rows, delimiter) {
+  const d = delimiter || ',';
   const allCols = ['task_id','subtask_id','task','subtask','stream','description','start_date','end_date','progress','dependencies'];
   const presentKeys = rows.length > 0 ? Object.keys(rows[0]) : [];
   const headers = allCols.filter(c => presentKeys.some(k => k.toLowerCase().replace(/\s+/g,'_') === c));
   if (headers.length === 0) return '';
   const escape = (v) => {
     const s = String(v || '');
+    if (d === '|') return s;
     return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
-  const lines = [headers.join(',')];
+  const lines = [headers.join(d)];
   rows.forEach(row => {
-    lines.push(headers.map(h => escape(row[h] || '')).join(','));
+    lines.push(headers.map(h => escape(row[h] || '')).join(d));
   });
   return lines.join('\n');
 }
