@@ -3,6 +3,18 @@ const { useState, useMemo, useCallback, useEffect } = React;
 
 function flattenRows(tasks, expanded, groupBy) {
   const rows = [];
+  const addEpic = (epic) => {
+    rows.push({ ...epic, type: 'epic', hasChildren: epic.activities.length > 0 });
+    if (expanded.has(epic.id)) {
+      epic.activities.forEach(act => {
+        rows.push({ ...act, type: 'activity', hasChildren: act.subactivities.length > 0 });
+        if (expanded.has(act.id)) {
+          act.subactivities.forEach(sub => rows.push({ ...sub, type: 'subactivity' }));
+        }
+      });
+    }
+  };
+
   if (groupBy === 'stream') {
     const byStream = {};
     tasks.forEach(t => {
@@ -10,49 +22,48 @@ function flattenRows(tasks, expanded, groupBy) {
       byStream[t.stream].push(t);
     });
     Object.keys(byStream).sort().forEach(stream => {
-      rows.push({ type: 'stream-header', name: stream, id: `sh-${stream}`, isSubtask: false });
-      byStream[stream].forEach(task => {
-        rows.push({ ...task, type: 'task', hasChildren: task.subtasks.length > 0 });
-        if (expanded.has(task.id)) {
-          task.subtasks.forEach(st => rows.push({ ...st, type: 'subtask' }));
-        }
-      });
+      rows.push({ type: 'stream-header', name: stream, id: `sh-${stream}`, level: 'header' });
+      byStream[stream].forEach(addEpic);
     });
   } else {
-    tasks.forEach(task => {
-      rows.push({ ...task, type: 'task', hasChildren: task.subtasks.length > 0 });
-      if (expanded.has(task.id)) {
-        task.subtasks.forEach(st => rows.push({ ...st, type: 'subtask' }));
-      }
-    });
+    tasks.forEach(addEpic);
   }
   return rows;
 }
 
 function applyFilters(tasks, filters) {
-  return tasks.map(task => {
-    const subs = task.subtasks.filter(st => {
-      if (filters.hideCompleted && st.progress >= 100) return false;
-      if (filters.selectedRAG && !filters.selectedRAG.has(st.rag)) return false;
+  return tasks.map(epic => {
+    const activities = epic.activities.map(act => {
+      const subs = act.subactivities.filter(sub => {
+        if (filters.hideCompleted && sub.progress >= 100) return false;
+        if (filters.selectedRAG && !filters.selectedRAG.has(sub.rag)) return false;
+        return true;
+      });
+      return { ...act, subactivities: subs };
+    }).filter(act => {
+      if (filters.hideCompleted && act.progress >= 100 && act.subactivities.every(s => s.progress >= 100)) return false;
+      if (filters.selectedRAG) {
+        if (!filters.selectedRAG.has(act.rag) && !act.subactivities.some(s => filters.selectedRAG.has(s.rag))) return false;
+      }
       return true;
     });
-
-    return { ...task, subtasks: subs };
-  }).filter(task => {
-    if (filters.selectedStreams && !filters.selectedStreams.has(task.stream)) return false;
-    if (filters.hideCompleted && task.progress >= 100 && task.subtasks.every(s => s.progress >= 100)) return false;
+    return { ...epic, activities };
+  }).filter(epic => {
+    if (filters.selectedStreams && !filters.selectedStreams.has(epic.stream)) return false;
+    if (filters.hideCompleted && epic.progress >= 100 && epic.activities.every(a => a.progress >= 100)) return false;
 
     if (filters.selectedRAG) {
-      const taskMatch = filters.selectedRAG.has(task.rag);
-      const subMatch = task.subtasks.some(s => filters.selectedRAG.has(s.rag));
-      if (!taskMatch && !subMatch) return false;
+      const epicMatch = filters.selectedRAG.has(epic.rag);
+      const actMatch = epic.activities.some(a => filters.selectedRAG.has(a.rag) || a.subactivities.some(s => filters.selectedRAG.has(s.rag)));
+      if (!epicMatch && !actMatch) return false;
     }
 
     if (filters.searchQuery) {
       const q = filters.searchQuery.toLowerCase();
-      const m = task.name.toLowerCase().includes(q) || task.id.toLowerCase().includes(q);
-      const sm = task.subtasks.some(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
-      if (!m && !sm) return false;
+      const em = epic.name.toLowerCase().includes(q) || epic.id.toLowerCase().includes(q);
+      const am = epic.activities.some(a => a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) ||
+        a.subactivities.some(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)));
+      if (!em && !am) return false;
     }
 
     return true;
@@ -92,7 +103,8 @@ function App() {
   // Auto-expand all tasks on first load and calculate dayWidth
   useEffect(() => {
     if (processedData) {
-      const ids = new Set(processedData.tasks.map(t => t.id));
+      const ids = new Set();
+      processedData.tasks.forEach(t => { ids.add(t.id); t.activities.forEach(a => ids.add(a.id)); });
       setExpanded(ids);
       // Auto-scale dayWidth
       if (processedData.timelineStart && processedData.timelineEnd) {
@@ -109,14 +121,20 @@ function App() {
     if (!processedData || !compareData) return null;
     const map = {};
     const compareMap = {};
-    compareData.tasks.forEach(t => {
-      compareMap[t.id] = t.progress;
-      t.subtasks.forEach(s => { compareMap[s.id] = s.progress; });
+    compareData.tasks.forEach(epic => {
+      compareMap[epic.id] = epic.progress;
+      epic.activities.forEach(act => {
+        compareMap[act.id] = act.progress;
+        act.subactivities.forEach(sub => { compareMap[sub.id] = sub.progress; });
+      });
     });
-    processedData.tasks.forEach(t => {
-      if (compareMap[t.id] != null) map[t.id] = t.progress - compareMap[t.id];
-      t.subtasks.forEach(s => {
-        if (compareMap[s.id] != null) map[s.id] = s.progress - compareMap[s.id];
+    processedData.tasks.forEach(epic => {
+      if (compareMap[epic.id] != null) map[epic.id] = epic.progress - compareMap[epic.id];
+      epic.activities.forEach(act => {
+        if (compareMap[act.id] != null) map[act.id] = act.progress - compareMap[act.id];
+        act.subactivities.forEach(sub => {
+          if (compareMap[sub.id] != null) map[sub.id] = sub.progress - compareMap[sub.id];
+        });
       });
     });
     return map;
@@ -139,7 +157,11 @@ function App() {
   }, []);
 
   const expandAll = useCallback(() => {
-    if (processedData) setExpanded(new Set(processedData.tasks.map(t => t.id)));
+    if (processedData) {
+      const ids = new Set();
+      processedData.tasks.forEach(t => { ids.add(t.id); t.activities.forEach(a => ids.add(a.id)); });
+      setExpanded(ids);
+    }
   }, [processedData]);
 
   const collapseAll = useCallback(() => setExpanded(new Set()), []);
@@ -267,11 +289,11 @@ function App() {
     document.body.removeChild(a); URL.revokeObjectURL(url);
   }, [rawData, csvDelimiter]);
 
-  // Update date for a task/subtask
+  // Update date for any item
   const handleUpdateDate = useCallback((itemId, field, date) => {
     if (!rawData) return;
     const updated = rawData.map(row => {
-      const rowId = (row.subtask_id || '').trim() || (row.task_id || '').trim();
+      const rowId = (row.subactivity_id || '').trim() || (row.activity_id || '').trim() || (row.epic_id || '').trim();
       if (rowId === itemId) {
         const copy = { ...row };
         if (field === 'start') copy.start_date = formatDate(date);
@@ -298,7 +320,7 @@ function App() {
   }, []);
 
   const taskCount = filteredTasks.length;
-  const subtaskCount = filteredTasks.reduce((a, t) => a + t.subtasks.length, 0);
+  const subtaskCount = filteredTasks.reduce((a, epic) => a + epic.activities.length + epic.activities.reduce((b, act) => b + act.subactivities.length, 0), 0);
 
   return (
     <div className="app" onDragOver={handleDragOver} onDrop={handleDrop}>
@@ -342,7 +364,7 @@ function App() {
             <h2>Upload a CSV file</h2>
             <p>Drag & drop or click to browse</p>
             <p style={{marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)'}}>
-              Required: task_id, task, subtask, stream, start_date, end_date — Optional: subtask_id, description, progress, dependencies
+              Required: epic_id, activity_id, subactivity_id, summary, stream, start_date, end_date — Optional: description, progress, dependencies
             </p>
           </div>
           <button className="btn" onClick={handleLoadSample}>
