@@ -74,7 +74,7 @@ const STREAM_COLORS = [
 
 // === CSV Validation ===
 function validateCSVColumns(headers) {
-  const required = ['task_id','task','subtask','stream','start_date','end_date'];
+  const required = ['task_id','subtask_id','task','subtask','stream','start_date','end_date'];
   const normalized = headers.map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
   const missing = required.filter(r => !normalized.includes(r));
   return { valid: missing.length === 0, missing, normalized };

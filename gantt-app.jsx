@@ -342,7 +342,7 @@ function App() {
             <h2>Upload a CSV file</h2>
             <p>Drag & drop or click to browse</p>
             <p style={{marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)'}}>
-              Required: task_id, task, subtask, stream, start_date, end_date — Optional: subtask_id, description, progress, dependencies
+              Required: task_id, subtask_id, task, subtask, stream, start_date, end_date — Optional: description, progress, dependencies
             </p>
           </div>
           <button className="btn" onClick={handleLoadSample}>
