@@ -226,7 +226,7 @@ function Toolbar({
         <h1>Gantt Chart</h1>
         <div style={{flex:1}}></div>
         {hasData && <span style={{fontSize:11, color:'var(--text-tertiary)'}}>
-          {taskCount} tasks · {subtaskCount} subtasks
+          {taskCount} epics · {subtaskCount} items
         </span>}
         {hasData && !compareFileName && (
           <button className="btn btn-sm" onClick={() => compareRef.current.click()}>

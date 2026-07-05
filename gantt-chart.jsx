@@ -7,9 +7,10 @@ const HEADER_H = 52;
 
 // --- Left Panel Row ---
 function LeftPanelRow({ row, isExpanded, onToggle, streamColors }) {
-  const isSub = row.isSubtask;
-  const isTask = row.type === 'task';
   const isStreamHeader = row.type === 'stream-header';
+  const isEpic = row.type === 'epic';
+  const isActivity = row.type === 'activity';
+  const isSubactivity = row.type === 'subactivity';
 
   if (isStreamHeader) {
     return (
@@ -19,18 +20,21 @@ function LeftPanelRow({ row, isExpanded, onToggle, streamColors }) {
     );
   }
 
+  const indent = isSubactivity ? 52 : isActivity ? 36 : 0;
+  const hasExpander = (isEpic || isActivity) && row.hasChildren;
+
   return (
-    <div className={`left-cell ${isSub ? 'subtask' : 'task'}`} style={{height: ROW_HEIGHT}} title={`${row.id} — ${row.name}`}>
-      {isTask && row.hasChildren ? (
+    <div className={`left-cell ${isEpic ? 'task' : isActivity ? 'activity' : 'subtask'}`} style={{height: ROW_HEIGHT, paddingLeft: indent}} title={`${row.id} — ${row.name}`}>
+      {hasExpander ? (
         <button className="expand-btn" onClick={() => onToggle(row.id)}>
           {isExpanded ? '▾' : '▸'}
         </button>
-      ) : isTask ? (
+      ) : (isEpic || isActivity) ? (
         <span style={{width: 20, flexShrink: 0}}></span>
       ) : null}
       <span className="task-id">{row.id}</span>
       <span className="task-name">{row.name}</span>
-      {!isSub && (
+      {isEpic && (
         <span className="stream-pill" style={{background: streamColors[row.stream] || '#888'}}>{row.stream}</span>
       )}
     </div>
@@ -78,7 +82,7 @@ function GridLines({ data, dayWidth, chartWidth, totalHeight }) {
 function TaskBar({ row, data, dayWidth, onHover, onLeave, delta, onDateClick }) {
   const color = data.streamColors[row.stream] || '#888';
   const ragColor = RAG_COLORS[row.rag];
-  const isParent = row.type === 'task' && row.hasChildren;
+  const isParent = (row.type === 'epic' || (row.type === 'activity' && row.hasChildren));
   const barHeight = isParent ? ROW_HEIGHT - 16 : ROW_HEIGHT - 14;
   const barTop = isParent ? 8 : 7;
 
@@ -234,9 +238,11 @@ function TooltipCard({ item, position }) {
 
   return ReactDOM.createPortal(
     <div className="tooltip-card" style={{left: x, top: y}}>
-      <div className="tt-header">{item.isSubtask ? item.name : item.name}</div>
+      <div className="tt-header">{item.name}</div>
       <div className="tt-row"><span className="tt-label">ID</span><span style={{fontFamily:'monospace'}}>{item.id}</span></div>
-      {item.isSubtask && <div className="tt-row"><span className="tt-label">Parent</span><span>{item.taskName} ({item.taskId})</span></div>}
+      <div className="tt-row"><span className="tt-label">Level</span><span style={{textTransform:'capitalize'}}>{item.level || item.type}</span></div>
+      {item.epicId && <div className="tt-row"><span className="tt-label">Epic</span><span style={{fontFamily:'monospace'}}>{item.epicId}</span></div>}
+      {item.activityId && item.level === 'subactivity' && <div className="tt-row"><span className="tt-label">Activity</span><span style={{fontFamily:'monospace'}}>{item.activityId}</span></div>}
       <div className="tt-row"><span className="tt-label">Stream</span><span>{item.stream}</span></div>
       {item.description && <div className="tt-row" style={{flexDirection:'column'}}><span className="tt-label">Description</span><span style={{color:'var(--text-secondary)', marginTop: 2, lineHeight: 1.4}}>{item.description}</span></div>}
       <div style={{display:'flex', gap: 16, marginTop: 4}}>
@@ -337,7 +343,7 @@ function GanttChart({ data, flatRows, expanded, toggleExpand, dayWidth, showDeps
   const totalHeight = flatRows.length * ROW_HEIGHT;
 
   const allExpanded = useMemo(() => {
-    const expandable = flatRows.filter(r => r.type === 'task' && r.hasChildren);
+    const expandable = flatRows.filter(r => (r.type === 'epic' || r.type === 'activity') && r.hasChildren);
     return expandable.length > 0 && expandable.every(r => expanded.has(r.id));
   }, [flatRows, expanded]);
 
